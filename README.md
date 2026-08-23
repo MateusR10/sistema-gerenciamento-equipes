@@ -29,16 +29,17 @@ Isso vai gerar o arquivo `database/gerenciamento.db` (não é enviado ao Git, po
 
 ## Estrutura do projeto
 
+```
 sistema-gerenciamento-equipes/
 ├── database/
-│ ├── schema.sql -> definição das tabelas (fonte da verdade)
-│ ├── db.py -> conecta e inicializa o banco
-│ └── verificar.py -> script auxiliar pra checar as tabelas criadas
-├── app.py -> ponto de entrada do Streamlit
+│   ├── schema.sql      -> definição das tabelas (fonte da verdade)
+│   ├── db.py            -> conecta e inicializa o banco
+│   └── verificar.py     -> script auxiliar pra checar as tabelas criadas
+├── app.py                -> ponto de entrada do Streamlit
 ├── requirements.txt
 ├── .gitignore
 └── README.md
-
+```
 
 ## Andamento
 

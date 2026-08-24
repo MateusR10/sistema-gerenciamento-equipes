@@ -5,60 +5,31 @@ from streamlit_sortables import sort_items
 from database.db import inicializar_banco
 from database import tarefas_repo as repo
 
+# configuração básica da página (título na aba, ícone, layout ocupando a tela toda)
 st.set_page_config(page_title="Sistema de Gerenciamento de Equipes", page_icon="🗂️", layout="wide")
 
+# cria as tabelas no banco caso ainda não existam (não faz nada se já existirem)
 inicializar_banco()
 
+# ordem das colunas do kanban — é essa lista que dita a ordem em que elas aparecem na tela
 FASES = ["A Fazer", "Em Andamento", "Em Revisão", "Concluído"]
 
-CUSTOM_CSS = """
-.sortable-component {
-    display: flex;
-    gap: 14px;
-    overflow-x: auto;
-    padding-bottom: 10px;
-}
-.sortable-container {
-    background: #F1F2F6;
-    border-radius: 12px;
-    padding: 10px;
-    min-width: 240px;
-    flex: 0 0 240px;
-}
-.sortable-container-header {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #374151;
-    padding: 6px 4px 12px 4px;
-    margin-bottom: 6px;
-    border-bottom: 2px solid rgba(0,0,0,0.08);
-}
-.sortable-item {
-    background: #ff8f;
-    border-radius: 8px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    font-size: 0.83rem;
-    line-height: 1.5;
-    white-space: pre-line;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
-    border-left: 4px solid #94A3B8;
-    cursor: grab;
-}
-.sortable-container:nth-child(2) .sortable-item { border-left-color: #F59E0B; }
-.sortable-container:nth-child(3) .sortable-item { border-left-color: #8B5CF6; }
-.sortable-container:nth-child(4) .sortable-item { border-left-color: #10B981; }
-"""
 
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-</style>
-""", unsafe_allow_html=True)
+def carregar_css(caminho):
+    """Lê um arquivo .css do disco e devolve o conteúdo como texto."""
+    with open(caminho, "r", encoding="utf-8") as arquivo:
+        return arquivo.read()
+
+
+# aplica o css geral da página (fonte, etc.) — precisa do <style> porque é injetado via markdown
+st.markdown(f"<style>{carregar_css('estilo/geral.css')}</style>", unsafe_allow_html=True)
+
+# esse aqui não vai por <style>: o componente sort_items espera receber o css puro
+CSS_KANBAN = carregar_css("estilo/kanban.css")
 
 
 def tempo_decorrido(inicio_str):
+    """Quanto tempo já passou desde que a tarefa entrou na fase atual (usado em 'Em Andamento')."""
     if not inicio_str:
         return None
     inicio = datetime.strptime(inicio_str, "%Y-%m-%d %H:%M:%S")
@@ -73,6 +44,7 @@ def tempo_decorrido(inicio_str):
 
 
 def formatar_intervalo(delta):
+    """Transforma um timedelta (ex: tempo total de execução) em texto tipo '2h 15min'."""
     minutos_totais = int(delta.total_seconds() // 60)
     h, m = divmod(minutos_totais, 60)
     return f"{h}h {m}min" if h else f"{m}min"
@@ -80,6 +52,8 @@ def formatar_intervalo(delta):
 
 st.title("🗂️ Quadro de Atividades")
 
+# ---- formulário de cadastro de nova atividade ----
+# fica dentro de um expander pra não ocupar espaço da tela o tempo todo
 with st.expander("➕ Nova atividade"):
     with st.form("form_nova_tarefa", clear_on_submit=True):
         col1, col2 = st.columns(2)
@@ -92,14 +66,19 @@ with st.expander("➕ Nova atividade"):
             if not titulo.strip() or not responsavel.strip():
                 st.warning("Preencha ao menos o título e o responsável.")
             else:
+                # cria a tarefa já na fase "A Fazer" (isso é feito dentro de criar_tarefa)
                 repo.criar_tarefa(titulo.strip(), descricao.strip() or None, responsavel.strip())
                 st.rerun()
 
 st.divider()
 
+# ---- monta os dados do quadro a partir do banco ----
 tarefas = repo.listar_tarefas()
 tarefas_por_id = {t["id"]: t for t in tarefas}
 
+# o componente de arrastar trabalha com texto simples, então cada card vira uma
+# string (título + responsável + tempo). guardamos um mapa rótulo -> id pra
+# depois saber qual tarefa foi movida quando o usuário arrastar um card.
 containers = []
 rotulo_para_id = {}
 
@@ -110,10 +89,12 @@ for fase in FASES:
     for t in tarefas_da_fase:
         linhas = [f"#{t['id']} · {t['titulo']}", f"👤 {t['responsavel']}"]
 
+        # só mostra o cronômetro rodando quando a tarefa está em execução
         if fase == "Em Andamento":
             duracao = tempo_decorrido(t["inicio_fase_atual"])
             if duracao:
                 linhas.append(f"⏱ {duracao}")
+        # e o tempo total gasto quando ela já foi concluída
         elif fase == "Concluído":
             total = repo.tempo_total_execucao(t["id"])
             if total:
@@ -125,14 +106,19 @@ for fase in FASES:
 
     containers.append({"header": f"{fase} ({len(tarefas_da_fase)})", "items": rotulos})
 
+# ---- renderiza o quadro arrastável ----
+# cada elemento de "resultado" reflete o estado atual da tela DEPOIS do usuário
+# soltar o card em algum lugar — é comparando isso com o banco que descobrimos
+# se algo mudou de coluna.
 resultado = sort_items(
     containers,
     multi_containers=True,
     direction="horizontal",
-    custom_style=CUSTOM_CSS,
+    custom_style=CSS_KANBAN,
     key="quadro_kanban",
 )
 
+# ---- detecta se algum card mudou de fase e grava no banco ----
 houve_mudanca = False
 for indice, grupo in enumerate(resultado):
     fase_nova = FASES[indice]
@@ -142,5 +128,7 @@ for indice, grupo in enumerate(resultado):
             repo.mover_fase(id_tarefa, fase_nova)
             houve_mudanca = True
 
+# se algo mudou, recarrega a página pra buscar o estado atualizado do banco
+# (sem isso, o quadro podia mostrar um tempo/coluna desatualizado por um instante)
 if houve_mudanca:
     st.rerun()

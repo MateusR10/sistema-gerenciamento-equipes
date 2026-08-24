@@ -1,0 +1,46 @@
+/* estilo do quadro arrastável (streamlit-sortables) */
+
+.sortable-component {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+/* cada coluna do kanban (A Fazer, Em Andamento, etc.) */
+.sortable-container {
+    background: #200d82;
+    border-radius: 12px;
+    padding: 10px;
+    min-width: 240px;
+    flex: 0 0 240px;
+}
+
+/* título de cada coluna, com o contador de tarefas */
+.sortable-container-header {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #e5e3ee;
+    padding: 6px 4px 12px 4px;
+    margin-bottom: 6px;
+    border-bottom: 2px solid rgba(0,0,0,0.08);
+}
+
+/* o card da tarefa em si */
+.sortable-item {
+    background: #4329c7;
+    border-radius: 1px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    font-size: 0.83rem;
+    line-height: 1.5;
+    white-space: pre-line;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    border-left: 4px solid #2003b0;
+    cursor: grab;
+}
+
+/* cor da faixa lateral do card muda de acordo com a coluna (fase) em que ele está */
+.sortable-container:nth-child(2) .sortable-item { border-left-color: #F59E0B; }
+.sortable-container:nth-child(3) .sortable-item { border-left-color: #8B5CF6; }
+.sortable-container:nth-child(4) .sortable-item { border-left-color: #10B981; }

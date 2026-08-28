@@ -44,7 +44,7 @@ sistema-gerenciamento-equipes/
 ## Andamento
 
 - [x] Aula 1: estrutura do projeto, modelo de dados (usuarios, tarefas, historico_fases), banco criado e testado
-- [ ] Aula 2: tela de login (perfis ADM / Participante)
+- [x] Aula 2: tela de login (perfis ADM / Participante)
 - [ ] Aula 3: CRUD de tarefas + quadro Kanban
 - [ ] Aula 4: registro automático de tempo por fase
 - [ ] Aula 5: métricas, gráfico e exportação de relatório

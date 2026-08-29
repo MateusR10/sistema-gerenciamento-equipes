@@ -24,8 +24,23 @@ pip install -r requeriments.txt
 ```bash
    python database/db.py
 ```
-
 Isso vai gerar o arquivo `database/gerenciamento.db` (não é enviado ao Git, porque cada um tem que gerar o seu ao rodar o comando acima).
+
+6. Criar os usuários de teste (necessário pra conseguir logar no sistema):
+```bash
+   cd database
+   python criar_usuario_teste.py
+   cd ..
+```
+
+## Usuários de teste
+
+Depois de rodar o passo 6 acima, dois usuários ficam disponíveis para login:
+
+| Perfil       | E-mail                  | Senha  |
+|--------------|--------------------------|--------|
+| ADM          | admin@teste.com          | 123456 |
+| Participante | participante@teste.com   | 123456 |
 
 ## Estrutura do projeto
 
